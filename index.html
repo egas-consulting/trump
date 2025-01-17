@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>Scatter Plot with Pan & Zoom</title>
+
+  <!-- Include Roboto from Google Fonts -->
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Roboto&display=swap"
+  />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <style>
+    /* Use Roboto and set background */
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #EFF1F3;
+    }
+
+    .chart-container {
+      width: 90%;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px 0;
+      text-align: center;
+      position: relative; /* for absolute tooltip positioning */
+    }
+
+    .image-container {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    .wide-detail-image {
+      width: 100vw;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .filters {
+      margin-bottom: 5px;
+    }
+    .filters .filter-group {
+      display: inline-block;
+      margin: 0 10px;
+    }
+
+    /* Button styling */
+    .filters button {
+      margin: 3px;
+      padding: 5px 10px;
+      cursor: pointer;
+      border: 1px solid #8F99AD;
+      border-radius: 8px;
+      background: transparent;
+      color: #2C2D41;
+      font-weight: 500;
+    }
+
+    /* Active button styling */
+    .filters button.active {
+      background-color: #2C2D41;
+      color: #EFF1F3;
+    }
+
+    #scatterPlot {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid #ccc; /* optional border */
+    }
+
+    .face {
+      cursor: pointer;
+    }
+
+    .tooltip {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.85); /* 👈 Slightly transparent */
+    border: 1px solid #999;
+    padding: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+    
+    /* Customize Font */
+    font-size: 13px;
+    font-family: 'Roboto', sans-serif;
+    color: #2C2D41;
+    border-radius: 5px; /* Optional: rounded corners */
+    }
+
+    .image-container {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    }
+
+    .wide-detail-image {
+    width: 100vw; /* Default for mobile */
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    }
+
+    /* On larger screens, restrict width */
+    @media (min-width: 900px) { /* Adjust breakpoint as needed */
+    .wide-detail-image {
+        max-width: 900px; /* Matches scatter plot width */
+        width: 100%;
+    }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chart-container">
+
+    <!-- Filter buttons (same as before) -->
+    <div class="filters">
+      <!-- Filter by Gender -->
+      <div class="filter-group">
+        <span><strong>Filtrează după gen:</strong></span>
+        <button id="filtruGenBarbati">Bărbați</button>
+        <button id="filtruGenFemei">Femei</button>
+        <button id="filtruGenReset">Toți</button>
+      </div>
+
+      <!-- Filter by Age -->
+      <div class="filter-group">
+        <span><strong>Filtrează după vârstă:</strong></span>
+        <button id="filtruVarstaSub40">Sub 40</button>
+        <button id="filtruVarsta40_60">40-60</button>
+        <button id="filtruVarstaPeste60">Peste 60</button>
+        <button id="filtruVarstaReset">Toate</button>
+      </div>
+
+      <!-- Filter by Type of Position -->
+      <div class="filter-group">
+        <span><strong>Tipul poziției:</strong></span>
+        <button id="filtruTipCabinet">Cabinet</button>
+        <button id="filtruTipExtern">Externe și instituții</button>
+        <button id="filtruTipCasa">Casa Alba</button>
+        <button id="filtruTipPres">Președinte și Vicepreședinte</button>
+        <button id="filtruTipReset">Toate</button>
+      </div>
+
+      <!-- Filter by "Bucketed" Wealth -->
+      <div class="filter-group">
+        <span><strong>Filtrează după avere (interval):</strong></span>
+        
+        <button id="filtruAvere0">0</button>
+        <button id="filtruAvere1_10">1-10 mil.</button>
+        <button id="filtruAvere10_50">10-50 mil.</button>
+        <button id="filtruAvere50_100">50-100 mil.</button>
+        <button id="filtruAvere100_500">100-500 mil.</button>
+        <button id="filtruAvere500_1000">500 mil. - 1 mld.</button>
+        <button id="filtruAvere1000_10000">1-10 mld.</button>
+        <button id="filtruAvere10000_50000">10-50 mld.</button>
+        <button id="filtruAvere50000_100000">50-100 mld.</button>
+        <button id="filtruAvereOver100000">peste 100 mld.</button>
+        <button id="filtruAvereReset">Toate</button>
+      </div>
+    </div>
+
+    <!-- Our responsive SVG -->
+    <svg
+      id="scatterPlot"
+      class="scatter-plot"
+      viewBox="0 0 800 900"
+      preserveAspectRatio="xMinYMin meet"
+    ></svg>
+
+    <!-- Tooltip (HTML-based) -->
+    <div id="tooltip" class="tooltip"></div>
+  </div>
+
+  <!-- Big detail image at full width -->
+  <div class="image-container">
+    <img
+      id="hoverImage"
+      class="wide-detail-image"
+      src="blank.png"
+      alt="Hover Details"
+    />
+  </div>
+
+  <script>
+    let selectedId = null; 
+    let hoveredId = null;
+
+    // data
+    let data = [
+      
+      
+    {
+        id: 2,
+        name: "Lee Zeldin",
+        function: "administratorul Agenției pentru Protecția Mediului",
+        age: 44,
+        wealth: 0,
+        faceDefault: "zeldin1.png",
+        faceHover: "zeldin.png",
+        image: "zeldin2.png",
+        gender: "m",
+        tipPoz: "cabinet",
+        inaltime: 0.00,
+        lungime: 0.00,
+        ecuator: 0
+    },
+    {
+        id: 3,
+        name: "Elise Stefanik",
+        function: "ambasadoare la ONU",
+        age: 40,
+        wealth: 0,
+        faceDefault: "stefanik1.png",
+        faceHover: "stefanik.png",
+        image: "stefanik2.png",
+        gender: "f",
+        tipPoz: "cabinet",
+        inaltime: 0.00,
+        lungime: 0.00,
+        ecuator: 0
+    },
+    
+    
+    {
+        id: 9,
+        name: "Scott Turner",
+        function: "secretarul pentru Locuințe și Dezvoltare Urbană",
+        age: 52,
+        wealth: 0,
+        faceDefault: "turner1.png",
+        faceHover: "turner.png",
+        image: "turner2.png",
+        gender: "m",
+        tipPoz: "cabinet",
+        inaltime: 0.00,
+        lungime: 0.00,
+        ecuator: 0
+    },
+    
+    {
+        id: 14,
+        name: "Pete Hoekstra",
+        function: "ambasador în Canada",
+        age: 71,
+        wealth: 0,
+        faceDefault: "hoekstra1.png",
+        faceHover: "hoekstra.png",
+        image: "hoekstra2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 0.00,
+        lungime: 0.00,
+        ecuator: 0
+    },
+    
+    {
+        id: 23,
+        name: "Marco Rubio",
+        function: "șeful diplomației SUA",
+        age: 53,
+        wealth: 1,
+        faceDefault: "rubio1.png",
+        faceHover: "rubio.png",
+        image: "rubio2.png",
+        gender: "m",
+        tipPoz: "cabinet",
+        inaltime: 0.01,
+        lungime: 1.56,
+        ecuator: 0.000038927
+    },
+    {
+        id: 24,
+        name: "Kristi Noem",
+        function: "secretarul pentru Securitate Internă",
+        age: 53,
+        wealth: 2.3,
+        faceDefault: "noem1.png",
+        faceHover: "noem.png",
+        image: "noem2.png",
+        gender: "f",
+        tipPoz: "cabinet",
+        inaltime: 0.01,
+        lungime: 3.59,
+        ecuator: 0.0000895321
+    },
+    {
+        id: 25,
+        name: "Pam Bondi",
+        function: "procurorul general (echivalentul ministrului Justiției)",
+        age: 59,
+        wealth: 3.9,
+        faceDefault: "bondi1.png",
+        faceHover: "bondi.png",
+        image: "bondi2.png",
+        gender: "f",
+        tipPoz: "cabinet",
+        inaltime: 0.03,
+        lungime: 6.08,
+        ecuator: 0.000151815
+    },
+    {
+        id: 26,
+        name: "John Ratcliffe",
+        function: "directorul CIA",
+        age: 59,
+        wealth: 6.7,
+        faceDefault: "ratcliffe1.png",
+        faceHover: "ratcliffe.png",
+        image: "ratcliffe2.png",
+        gender: "m",
+        tipPoz: "cabinet",
+        inaltime: 0.04,
+        lungime: 10.45,
+        ecuator: 0.000260811
+    },
+    {
+        id: 27,
+        name: "Lori Chavez-DeRemer",
+        function: "secretarul pentru Muncă",
+        age: 56,
+        wealth: 9.6,
+        faceDefault: "chavez1.png",
+        faceHover: "chavez.png",
+        image: "chavez2.png",
+        gender: "f",
+        tipPoz: "cabinet",
+        inaltime: 0.06,
+        lungime: 14.98,
+        ecuator: 0.000373699
+    },
+    {
+        id: 28,
+        name: "Robert F. Kennedy Jr.",
+        function: "secretarul pentru Sănătate",
+        age: 71,
+        wealth: 15,
+        faceDefault: "kennedy1.png",
+        faceHover: "kennedy.png",
+        image: "kennedy2.png",
+        gender: "m",
+        tipPoz: "cabinet",
+        inaltime: 0.10,
+        lungime: 23.40,
+        ecuator: 0.000583905
+    },
+    {
+        id: 29,
+        name: "Mike Huckabee",
+        function: "ambasador în Israel",
+        age: 69,
+        wealth: 18,
+        faceDefault: "huckabee1.png",
+        faceHover: "huckabee.png",
+        image: "huckabee2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 0.12,
+        lungime: 28.08,
+        ecuator: 0.000700686
+    },
+    {
+        id: 30,
+        name: "David Perdue",
+        function: "ambasador în China",
+        age: 75,
+        wealth: 25,
+        faceDefault: "perdue1.png",
+        faceHover: "perdue.png",
+        image: "perdue2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 0.16,
+        lungime: 39.00,
+        ecuator: 0.000973175
+    },
+    {
+        id: 31,
+        name: "Kimberly Guilfoyle",
+        function: "ambasadoare în Grecia",
+        age: 55,
+        wealth: 25,
+        faceDefault: "guilfoyle1.png",
+        faceHover: "guilfoyle.png",
+        image: "guilfoyle2.png",
+        gender: "f",
+        tipPoz: "externa",
+        inaltime: 0.16,
+        lungime: 39.00,
+        ecuator: 0.000973175
+    },
+    {
+        id: 32,
+        name: "Pete Hegseth",
+        function: "secretarul Apărării",
+        age: 44,
+        wealth: 27,
+        faceDefault: "hegseth1.png",
+        faceHover: "hegseth.png",
+        image: "hegseth2.png",
+        gender: "m",
+        tipPoz: "cabinet",
+        inaltime: 0.17,
+        lungime: 42.12,
+        ecuator: 0.001051029
+    },
+    {
+        id: 33,
+        name: "Kash Patel",
+        function: "directorul FBI",
+        age: 44,
+        wealth: 30,
+        faceDefault: "patel1.png",
+        faceHover: "patel.png",
+        image: "patel2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 0.19,
+        lungime: 46.80,
+        ecuator: 0.00116781
+    },
+    {
+        id: 34,
+        name: "Chris Wright",
+        function: "secretarul pentru Energie",
+        age: 59,
+        wealth: 50,
+        faceDefault: "wright1.png",
+        faceHover: "wright.png",
+        image: "wright2.png",
+        gender: "m",
+        tipPoz: "cabinet",
+        inaltime: 0.32,
+        lungime: 78.00,
+        ecuator: 0.00194635
+    },
+    {
+        id: 35,
+        name: "Doug Burgum",
+        function: "secretarul pentru Afaceri Interne",
+        age: 68,
+        wealth: 100,
+        faceDefault: "burgum1.png",
+        faceHover: "burgum.png",
+        image: "burgum2.png",
+        gender: "m",
+        tipPoz: "cabinet",
+        inaltime: 0.65,
+        lungime: 156.00,
+        ecuator: 0.0038927
+    },
+    {
+        id: 36,
+        name: "Mehmet Oz",
+        function: "administratorul programelor de asigurări de sănătate",
+        age: 64,
+        wealth: 300,
+        faceDefault: "oz1.png",
+        faceHover: "oz.png",
+        image: "oz2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 1.94,
+        lungime: 468.00,
+        ecuator: 0.011678099
+    },
+    {
+        id: 37,
+        name: "Charles Kushner",
+        function: "ambasador în Franța",
+        age: 70,
+        wealth: 580,
+        faceDefault: "kushner1.png",
+        faceHover: "kushner.png",
+        image: "kushner2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 3.75,
+        lungime: 904.80,
+        ecuator: 0.022577657
+    },
+    {
+        id: 38,
+        name: "Thomas J. Barrack Jr.",
+        function: "ambasador în Turcia",
+        age: 77,
+        wealth: 600,
+        faceDefault: "barrack1.png",
+        faceHover: "barrack.png",
+        image: "barrack2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 3.88,
+        lungime: 936.00,
+        ecuator: 0.023356197
+    },
+    {
+        id: 39,
+        name: "Scott Bessent",
+        function: "secretarul Trezoreriei",
+        age: 62,
+        wealth: 1000,
+        faceDefault: "bessent1.png",
+        faceHover: "bessent.png",
+        image: "bessent2.png",
+        gender: "m",
+        tipPoz: "cabinet",
+        inaltime: 6.46,
+        lungime: 1560.00,
+        ecuator: 0.038926995
+    },
+    {
+        id: 40,
+        name: "Frank Bisignano",
+        function: "comisarul pentru Protecție Socială",
+        age: 65,
+        wealth: 1000,
+        faceDefault: "bisignano1.png",
+        faceHover: "bisignano.png",
+        image: "bisignano2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 6.46,
+        lungime: 1560.00,
+        ecuator: 0.038926995
+    },
+    {
+        id: 41,
+        name: "Kelly Loeffler",
+        function: "responsabilă pentru IMM-uri",
+        age: 54,
+        wealth: 1100,
+        faceDefault: "loeffler1.png",
+        faceHover: "loeffler.png",
+        image: "loeffler2.png",
+        gender: "f",
+        tipPoz: "externa",
+        inaltime: 7.11,
+        lungime: 1716.00,
+        ecuator: 0.042819695
+    },
+    {
+        id: 42,
+        name: "Howard Lutnick",
+        function: "secretarul pentru Comerț",
+        age: 63,
+        wealth: 1500,
+        faceDefault: "lutnick1.png",
+        faceHover: "lutnick.png",
+        image: "lutnick2.png",
+        gender: "m",
+        tipPoz: "cabinet",
+        inaltime: 9.69,
+        lungime: 2340.00,
+        ecuator: 0.058390493
+    },
+    {
+        id: 43,
+        name: "Jared Isaacman",
+        function: "administratorul NASA",
+        age: 41,
+        wealth: 1800,
+        faceDefault: "1isaacman1.png",
+        faceHover: "1isaacman.png",
+        image: "isaacman2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 11.63,
+        lungime: 2808.00,
+        ecuator: 0.070068592
+    },
+    {
+        id: 44,
+        name: "Linda McMahon",
+        function: "secretarul pentru Educație",
+        age: 76,
+        wealth: 3000,
+        faceDefault: "mcmahon1.png",
+        faceHover: "mcmahon.png",
+        image: "mcmahon2.png",
+        gender: "f",
+        tipPoz: "cabinet",
+        inaltime: 19.38,
+        lungime: 4680.00,
+        ecuator: 0.116780986
+    },
+    {
+        id: 45,
+        name: "Warren Stephens",
+        function: "ambasador în Marea Britanie",
+        age: 67,
+        wealth: 3400,
+        faceDefault: "stephens1.png",
+        faceHover: "stephens.png",
+        image: "stephens2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 21.97,
+        lungime: 5304.00,
+        ecuator: 0.132351784
+    },
+    {
+        id: 46,
+        name: "Tilman Fertitta",
+        function: "ambasador în Italia",
+        age: 67,
+        wealth: 10400,
+        faceDefault: "fertitta1.png",
+        faceHover: "fertitta.png",
+        image: "fertitta2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 67.19,
+        lungime: 16224.00,
+        ecuator: 0.404840752
+    },
+    {
+        id: 47,
+        name: "Donald Trump",
+        function: "președintele SUA",
+        age: 78,
+        wealth: 6100,
+        faceDefault: "trump1.png",
+        faceHover: "trump.png",
+        image: "trump2.png",
+        gender: "m",
+        tipPoz: "presedinte si vice",
+        inaltime: 39.41,
+        lungime: 9516.00,
+        ecuator: 0.237454672
+    },
+    {
+        id: 48,
+        name: "JD Vance",
+        function: "vicepreședintele SUA",
+        age: 40,
+        wealth: 10,
+        faceDefault: "vance1.png",
+        faceHover: "vance.png",
+        image: "vance2.png",
+        gender: "m",
+        tipPoz: "presedinte si vice",
+        inaltime: 0.06,
+        lungime: 15.60,
+        ecuator: 0.00038927
+    },
+    
+    {
+        id: 54,
+        name: "Elon Musk",
+        function: "co-președinte al departamentului pentru Eficiență Guvernamentală",
+        age: 53,
+        wealth: 430900,
+        faceDefault: "musk1.png",
+        faceHover: "musk.png",
+        image: "musk2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 2784.01,
+        lungime: 672204.00,
+        ecuator: 16.77364229
+    },
+    {
+        id: 55,
+        name: "Vivek Ramaswamy",
+        function: "co-președinte al departamentului pentru Eficiență Guvernamentală",
+        age: 39,
+        wealth: 1000,
+        faceDefault: "ramaswamy1.png",
+        faceHover: "ramaswamy.png",
+        image: "ramaswamy2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 6.46,
+        lungime: 1560.00,
+        ecuator: 0.038926995
+    },
+    
+    {
+        id: 57,
+        name: "Steven Witkoff",
+        function: "reprezentantul pentru Orientul Mijlociu",
+        age: 67,
+        wealth: 1000,
+        faceDefault: "witkoff1.png",
+        faceHover: "witkoff.png",
+        image: "witkoff2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 6.46,
+        lungime: 1560.00,
+        ecuator: 0.038926995
+    },
+    
+    {
+        id: 59,
+        name: "Massad Boulos",
+        function: "consilier al președintelui pe teme legate de Orientul Mijlociu",
+        age: 54,
+        wealth: 0,
+        faceDefault: "boulos1.png",
+        faceHover: "boulos.png",
+        image: "boulos2.png",
+        gender: "m",
+        tipPoz: "casa",
+        inaltime: 0.00,
+        lungime: 0.00,
+        ecuator: 0
+    },
+    
+    {
+        id: 61,
+        name: "David Sacks",
+        function: "responsabil pentru AI și crypto",
+        age: 52,
+        wealth: 200,
+        faceDefault: "sacks1.png",
+        faceHover: "sacks.png",
+        image: "sacks2.png",
+        gender: "m",
+        tipPoz: "externa",
+        inaltime: 1.29,
+        lungime: 312.00,
+        ecuator: 0.007785399
+    }
+    
+      // Add more data as needed...
+    ];
+
+    // -----------------------------------------
+    // 1) Bucket definitions for wealth
+    // -----------------------------------------
+    const wealthCategories = [
+     "0",
+    "1-10 mil.",
+    "10-50 mil.",
+    "50-100 mil.",
+    "100-500 mil.",
+    "500 mil. - 1 mld.",
+    "1-10 mld.",
+    "10-50 mld.",
+    "50-100 mld.",
+    "peste 100 mld."
+    ];
+
+    function wealthToCategory(w) {
+        if (w === 0) return "0";
+        if (w >= 1 && w < 10) return "1-10 mil.";
+        if (w >= 10 && w < 50) return "10-50 mil.";
+        if (w >= 50 && w < 100) return "50-100 mil.";
+        if (w >= 100 && w < 500) return "100-500 mil.";
+        if (w >= 500 && w < 1000) return "500 mil. - 1 mld.";
+        if (w >= 1000 && w < 10000) return "1-10 mld.";
+        if (w >= 10000 && w < 50000) return "10-50 mld.";
+        if (w >= 50000 && w < 100000) return "50-100 mld.";
+        return "peste 100 mld.";
+}
+
+    // Convert wealth to numeric + bucket
+    data.forEach(d => {
+      const parsed = +d.wealth;
+      d.wealthNumeric = isNaN(parsed) ? null : parsed;
+      d.wealthBucket = wealthToCategory(d.wealthNumeric);
+    });
+
+    // 2) X scale (linear for age)
+    const originalXDomain = d3.extent(data, d => d.age);
+
+    // Dimensions
+    const width = 800;
+    const height = 900;
+    const margin = { top: 20, right: 50, bottom: 55, left: 115 };
+
+    // Select our SVG + tooltip
+    const svg = d3.select("#scatterPlot");
+    const tooltip = d3.select("#tooltip");
+
+    // X-scale
+    const xScale = d3.scaleLinear()
+      .domain(originalXDomain)
+      .range([margin.left, width - margin.right]);
+
+    // Y-scale (band for buckets)
+    const yScale = d3.scaleBand()
+      .domain(wealthCategories)
+      .range([height - margin.bottom, margin.top])  // Keep normal values in place
+      .padding(0.1);
+
+    // Axes
+    const xAxis = d3.axisBottom(xScale).ticks(10);
+    const yAxis = d3.axisLeft(yScale)
+  .tickFormat(d => d);
+
+    // Axis groups
+    svg.append("g")
+      .attr("class", "x-axis")
+      .attr("transform", `translate(0,${height - margin.bottom})`);
+    svg.append("g")
+      .attr("class", "y-axis")
+      .attr("transform", `translate(${margin.left},0)`);
+
+    svg.append("text")
+    .attr("class", "x-axis-label")
+    .attr("x", width / 2)  // Center it horizontally
+    .attr("y", height - 10)  // Position it below the x-axis
+    .attr("text-anchor", "middle")
+    .style("font-size", "16px")
+    .style("font-weight", "bold")
+    .style("fill", "#333")
+    .text("Vârstă");
+
+    svg.append("text")
+    .attr("class", "y-axis-label")
+    .attr("x", -height / 2)  // Center vertically
+    .attr("y", 20)  // Move it left of the axis
+    .attr("transform", "rotate(-90)")  // Rotate to match y-axis direction
+    .attr("text-anchor", "middle")
+    .style("font-size", "16px")
+    .style("font-weight", "bold")
+    .style("fill", "#333")
+    .text("Avere (interval)");
+
+
+
+    // -----------------------------------------
+    // 3) D3 Zoom setup
+    // -----------------------------------------
+    const zoomBehavior = d3.zoom()
+      .scaleExtent([1, 5])               // how far you can zoom in or out
+      .translateExtent([[0, 0], [width, height]]) // limits the panning area
+      .extent([[0, 0], [width, height]]) // defines the zoomable area
+      .on("zoom", zoomed);
+
+    // Attach zoom to the SVG
+    svg.call(zoomBehavior);
+
+    function zoomed(event) {
+      // The transform tells us how to scale/pan
+      const transform = event.transform;
+
+      // Recalculate the ranges for each scale
+      const newXRange = [margin.left, width - margin.right].map(
+        d => transform.applyX(d)
+      );
+      xScale.range(newXRange);
+
+      // Because yScale is band, we also map its range
+      const newYRange = [height - margin.bottom, margin.top].map(
+        d => transform.applyY(d)
+      );
+      yScale.range(newYRange);
+
+      // Redraw axes with new ranges
+      svg.select(".x-axis").call(xAxis);
+      svg.select(".y-axis").call(yAxis);
+
+      // Re-position the faces
+      svg.selectAll(".face")
+        .attr("x", d => xScale(d.age) - 25)
+        .attr("y", d => {
+          const bandTop = yScale(d.wealthBucket);
+          return bandTop + yScale.bandwidth() / 2 - 25;
+        });
+    }
+
+    // -----------------------------------------
+    // 4) Filtering
+    // -----------------------------------------
+    const filters = {
+      gender: null,
+      varsta: null,
+      tipPoz: null,
+      avere: null, // matches wealthBucket
+    };
+
+    function filteredData() {
+      return data.filter(d => {
+        // Gender
+        if (filters.gender && d.gender !== filters.gender) return false;
+
+        // Age
+        if (filters.varsta) {
+          if (filters.varsta === 'sub40' && d.age >= 40) return false;
+          if (filters.varsta === '40_60' && (d.age < 40 || d.age > 60)) return false;
+          if (filters.varsta === 'peste60' && d.age <= 60) return false;
+        }
+
+        // Position type
+        if (filters.tipPoz && d.tipPoz !== filters.tipPoz) return false;
+
+        // Wealth (bucket)
+        if (filters.avere && d.wealthBucket !== filters.avere) return false;
+
+        return true;
+      });
+    }
+
+    function setActiveInGroup(clickedBtn) {
+      const parentGroup = clickedBtn.parentNode;
+      const allBtns = parentGroup.querySelectorAll("button");
+      allBtns.forEach(b => b.classList.remove("active"));
+      clickedBtn.classList.add("active");
+    }
+
+    function setupFilterButton(buttonId, filterKey, filterValue) {
+      const button = document.getElementById(buttonId);
+      button.addEventListener("click", () => {
+        setActiveInGroup(button);
+        filters[filterKey] = filterValue;
+        render(filteredData());
+      });
+    }
+    function setupFilterResetButton(buttonId, filterKey) {
+      const button = document.getElementById(buttonId);
+      button.addEventListener("click", () => {
+        setActiveInGroup(button);
+        filters[filterKey] = null;
+        render(filteredData());
+      });
+    }
+
+    // Gender filters
+    setupFilterButton("filtruGenBarbati", "gender", "m");
+    setupFilterButton("filtruGenFemei", "gender", "f");
+    setupFilterResetButton("filtruGenReset", "gender");
+
+    // Age filters
+    setupFilterButton("filtruVarstaSub40", "varsta", "sub40");
+    setupFilterButton("filtruVarsta40_60", "varsta", "40_60");
+    setupFilterButton("filtruVarstaPeste60", "varsta", "peste60");
+    setupFilterResetButton("filtruVarstaReset", "varsta");
+
+    // Type of position
+    setupFilterButton("filtruTipCabinet", "tipPoz", "cabinet");
+    setupFilterButton("filtruTipExtern", "tipPoz", "externa");
+    setupFilterButton("filtruTipCasa", "tipPoz", "casa");
+    setupFilterButton("filtruTipPres", "tipPoz", "presedinte si vice");
+    setupFilterResetButton("filtruTipReset", "tipPoz");
+
+    // Wealth bucket filters
+    
+    setupFilterButton("filtruAvere0", "avere", "0");
+    setupFilterButton("filtruAvere1_10", "avere", "1-10 mil.");
+    setupFilterButton("filtruAvere10_50", "avere", "10-50 mil.");
+    setupFilterButton("filtruAvere50_100", "avere", "50-100 mil.");
+    setupFilterButton("filtruAvere100_500", "avere", "100-500 mil.");
+    setupFilterButton("filtruAvere500_1000", "avere", "500 mil. - 1 mld.");
+    setupFilterButton("filtruAvere1000_10000", "avere", "1-10 mld.");
+    setupFilterButton("filtruAvere10000_50000", "avere", "10-50 mld.");
+    setupFilterButton("filtruAvere50000_100000", "avere", "50-100 mld.");
+    setupFilterButton("filtruAvereOver100000", "avere", "peste 100 mld.");
+    setupFilterResetButton("filtruAvereReset", "avere");
+
+    // -----------------------------------------
+    // 5) Render function
+    // -----------------------------------------
+    function render(dataArray) {
+      // Update axes (to reflect if the user filtered to fewer data points, 
+      // although the domain remains the same unless you wanted dynamic domains).
+      svg.select(".x-axis").call(xAxis);
+      svg.select(".y-axis").call(yAxis);
+
+      svg.select(".x-axis")
+        .selectAll("text")
+        .style("font-size", "15px")  // Adjust size
+        .style("fill", "#333")  // Adjust color if needed
+        .style("font-family", "Roboto, sans-serif");
+
+        svg.select(".y-axis")
+        .selectAll("text")
+        .style("font-size", "15px")  // Adjust size
+        .style("fill", "#333")  
+        .style("font-family", "Roboto, sans-serif");
+
+        svg.select(".x-axis-label")  // Assuming you have a label class
+        .style("font-size", "16px")
+        .style("font-weight", "bold");
+
+        svg.select(".y-axis-label")
+        .style("font-size", "16px")
+        .style("font-weight", "bold");
+
+      
+
+      // Data join
+      let faces = svg.selectAll(".face")
+        .data(dataArray, d => d.id);
+
+      // Remove old
+      faces.exit().remove();
+
+      // Enter + merge
+      faces = faces.enter()
+        .append("image")
+        .attr("class", "face")
+        .merge(faces);
+
+      faces
+        .attr("xlink:href", d => (d.id === selectedId) ? d.faceHover : d.faceDefault)
+        .transition()
+        .attr("x", d => xScale(d.age) - 25)
+        .attr("y", d => {
+          if (d.wealthBucket === "N/A") {
+          return yScale("-1") + yScale.bandwidth() / 2 - 25;  // 👈 Move to -1
+        }
+
+          const bandTop = yScale(d.wealthBucket);
+          return bandTop + yScale.bandwidth() / 2 - 25;
+        })
+        .attr("width", 60)
+        .attr("height", 60);
+
+      faces
+        .on("mouseover", function(event, d) {
+          hoveredId = d.id;
+          if (selectedId !== d.id) {
+            d3.select(this).attr("xlink:href", d.faceHover);
+          }
+          updateHoverImage(d.id);
+
+          const wealthText = d.wealthNumeric !== null 
+        ? (d.wealthNumeric < 1000 
+            ? `${d.wealthNumeric} mil.`  // If below 1000, keep in "mil."
+            : `${(d.wealthNumeric / 1000).toFixed(2)} mld.`)  // Convert to billions
+        : "N/A";
+          tooltip
+          .html(`
+            <strong>Nume:</strong> ${d.name}<br/>
+            <strong>Funcție:</strong> ${d.function}<br/>
+            <strong>Vârstă:</strong> ${d.age}<br/>
+            <strong>Avere:</strong> ${wealthText} <br/>
+            <strong>Nr. Washington Monuments:</strong> ${d.inaltime}<br/>
+            <strong>Distanță în bancnote:</strong> ${d.lungime} km <br/>
+            <strong>Adică circumferința Pământului de:</strong> ${d.ecuator} ori<br/>
+        `)
+        .style("background-color", "rgba(255, 255, 255, 0.85)")  // 👈 Slightly transparent
+        .style("border", "1px solid #999")
+        .style("padding", "10px")
+        .style("opacity", 1)  // Ensure tooltip appears on hover
+        .style("font-size", "13px")
+        .style("color", "#2C2D41")
+        .style("border-radius", "5px"); // Optional: rounded corners👈 Adjust text color if needed
+                })
+        .on("mousemove", function(event) {
+          const containerRect = document
+            .querySelector(".chart-container")
+            .getBoundingClientRect();
+          const tooltipX = event.clientX - containerRect.left + 10;
+          const tooltipY = event.clientY - containerRect.top + 10;
+          tooltip
+            .style("left", tooltipX + "px")
+            .style("top", tooltipY + "px");
+        })
+        .on("mouseout", function(event, d) {
+          hoveredId = null;
+          if (selectedId !== d.id) {
+            d3.select(this).attr("xlink:href", d.faceDefault);
+          }
+          updateHoverImage(null);
+          tooltip.style("opacity", 0);
+        })
+        .on("click", function(event, d) {
+          event.stopPropagation();
+          // Pin this face
+          selectedId = d.id;
+          d3.select(this).attr("xlink:href", d.faceHover);
+          updateHoverImage(d.id);
+        });
+    }
+
+    function updateHoverImage(subjectId) {
+      if (subjectId) {
+        let subj = data.find(d => d.id === subjectId);
+        d3.select("#hoverImage").attr("src", subj.image);
+      } else if (selectedId) {
+        let pinned = data.find(d => d.id === selectedId);
+        d3.select("#hoverImage").attr("src", pinned.image);
+      } else {
+        d3.select("#hoverImage").attr("src", "blank.png");
+      }
+    }
+
+    // If user clicks on empty SVG space, unpin
+    svg.on("click", function(event) {
+      if (event.target === this) {
+        selectedId = null;
+        hoveredId = null;
+        svg.selectAll(".face")
+          .attr("xlink:href", d => d.faceDefault);
+        updateHoverImage(null);
+      }
+    });
+
+    // Initial state
+    document.getElementById("filtruGenReset").classList.add("active");
+    document.getElementById("filtruVarstaReset").classList.add("active");
+    document.getElementById("filtruTipReset").classList.add("active");
+    document.getElementById("filtruAvereReset").classList.add("active");
+
+    // First render
+    render(data);
+  </script>
+</body>
+</html>
