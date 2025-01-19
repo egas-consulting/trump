@@ -95,13 +95,7 @@
 
     .face {
       cursor: pointer;
-    }
-
-    @media (max-width: 768px) {
-      .face {
-        width: 50px !important;
-        height: 50px !important;
-      }
+      /* Width and height are controlled via JavaScript */
     }
 
     /* Tooltip styles with maximum width and text wrapping */
@@ -166,6 +160,17 @@
       .wide-detail-image {
         max-width: 900px; /* Matches scatter plot width */
         width: 100%;
+      }
+    }
+
+    /* Media query for mobile devices to adjust axis labels */
+    @media (max-width: 768px) {
+      .x-axis-label {
+        font-size: 14px; /* Slightly smaller on mobile */
+      }
+
+      .y-axis-label {
+        font-size: 14px; /* Slightly smaller on mobile */
       }
     }
   </style>
@@ -832,7 +837,7 @@
       return {
           width: isMobile ? window.innerWidth * 0.9 : 800, // Adjust width dynamically
           height: isMobile ? 400 : 500, // **Reduced height for mobile**
-          faceSize: isMobile ? 50 : 40, // **Smaller faces on desktop**
+          faceSize: isMobile ? 40 : 50, // **Slightly smaller faces on mobile**
           fontSize: isMobile ? "10px" : "11px" // Adjust axis text size
       };
     }
@@ -1164,15 +1169,27 @@
           if (selectedId !== d.id) {
             d3.select(this).attr("xlink:href", d.faceDefault);
           }
-          updateHoverImage(null);
+          updateHoverImage(selectedId);
           tooltip.style("opacity", 0);
         })
         .on("click", function(event, d) {
           event.stopPropagation();
-          // Pin this face
-          selectedId = d.id;
-          d3.select(this).attr("xlink:href", d.faceHover);
-          updateHoverImage(d.id);
+
+          // Toggle selection
+          if (selectedId === d.id) {
+              // Deselect if the same face is clicked again
+              selectedId = null;
+          } else {
+              // Select the new face
+              selectedId = d.id;
+          }
+
+          // Update all faces' images based on selectedId
+          svg.selectAll(".face")
+              .attr("xlink:href", d => (d.id === selectedId) ? d.faceHover : d.faceDefault);
+
+          // Update the hover image
+          updateHoverImage(selectedId);
         });
     }
 
@@ -1180,9 +1197,6 @@
       if (subjectId) {
         let subj = data.find(d => d.id === subjectId);
         d3.select("#hoverImage").attr("src", subj.image);
-      } else if (selectedId) {
-        let pinned = data.find(d => d.id === selectedId);
-        d3.select("#hoverImage").attr("src", pinned.image);
       } else {
         d3.select("#hoverImage").attr("src", "blank.png");
       }
@@ -1208,6 +1222,7 @@
     // Function to update sizes dynamically on resize
     function updateSizes() {
       let newSize = getChartSize();
+      const isMobile = window.innerWidth < 768;
 
       // Update width, height, and viewBox
       svg.attr("width", newSize.width)
@@ -1233,11 +1248,13 @@
       // Update axis labels
       svg.select(".x-axis-label")
           .attr("x", newSize.width / 2)
-          .attr("y", newSize.height - 10);
+          .attr("y", newSize.height - 10)
+          .style("font-size", isMobile ? "14px" : "16px"); // Adjust font size
 
       svg.select(".y-axis-label")
           .attr("x", -newSize.height / 2)
-          .attr("y", 20);
+          .attr("y", isMobile ? 15 : 20) // Reduced space on mobile
+          .style("font-size", isMobile ? "14px" : "16px"); // Adjust font size
 
       // Resize and reposition faces dynamically
       svg.selectAll(".face")
