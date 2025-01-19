@@ -183,15 +183,15 @@
         <span><strong>Filtrează după avere (interval):</strong></span>
         
         <button id="filtruAvere0">0</button>
-        <button id="filtruAvere1_10">1-10 mil.</button>
-        <button id="filtruAvere10_50">10-50 mil.</button>
-        <button id="filtruAvere50_100">50-100 mil.</button>
-        <button id="filtruAvere100_500">100-500 mil.</button>
-        <button id="filtruAvere500_1000">0.5 - 1 mld.</button>
-        <button id="filtruAvere1000_10000">1-10 mld.</button>
-        <button id="filtruAvere10000_50000">10-50 mld.</button>
-        <button id="filtruAvere50000_100000">50-100 mld.</button>
-        <button id="filtruAvereOver100000">>100 mld.</button>
+        <button id="filtruAvere1_10">1-10mil.</button>
+        <button id="filtruAvere10_50">10-50mil.</button>
+        <button id="filtruAvere50_100">50-100mil.</button>
+        <button id="filtruAvere100_500">100-500mil.</button>
+        <button id="filtruAvere500_1000">0.5-1mld.</button>
+        <button id="filtruAvere1000_10000">1-10mld.</button>
+        <button id="filtruAvere10000_50000">10-50mld.</button>
+        <button id="filtruAvere50000_100000">50-100mld.</button>
+        <button id="filtruAvereOver100000">>100mld.</button>
         <button id="filtruAvereReset">Toate</button>
       </div>
     </div>
@@ -768,27 +768,27 @@
     // -----------------------------------------
     const wealthCategories = [
      "0",
-    "1-10 mil.",
-    "10-50 mil.",
-    "50-100 mil.",
-    "100-500 mil.",
-    "0.5 - 1 mld.",
-    "1-10 mld.",
-    "10-50 mld.",
-    "50-100 mld.",
-    ">100 mld."
+    "1-10mil.",
+    "10-50mil.",
+    "50-100mil.",
+    "100-500mil.",
+    "0.5-1mld.",
+    "1-10mld.",
+    "10-50mld.",
+    "50-100mld.",
+    ">100mld."
     ];
 
     function wealthToCategory(w) {
         if (w === 0) return "0";
-        if (w >= 1 && w < 10) return "1-10 mil.";
-        if (w >= 10 && w < 50) return "10-50 mil.";
-        if (w >= 50 && w < 100) return "50-100 mil.";
-        if (w >= 100 && w < 500) return "100-500 mil.";
-        if (w >= 500 && w < 1000) return "0.5 - 1 mld.";
-        if (w >= 1000 && w < 10000) return "1-10 mld.";
-        if (w >= 10000 && w < 50000) return "10-50 mld.";
-        if (w >= 50000 && w < 100000) return "50-100 mld.";
+        if (w >= 1 && w < 10) return "1-10mil.";
+        if (w >= 10 && w < 50) return "10-50mil.";
+        if (w >= 50 && w < 100) return "50-100mil.";
+        if (w >= 100 && w < 500) return "100-500mil.";
+        if (w >= 500 && w < 1000) return "0.5-1mld.";
+        if (w >= 1000 && w < 10000) return "1-10mld.";
+        if (w >= 10000 && w < 50000) return "10-50mld.";
+        if (w >= 50000 && w < 100000) return "50-100mld.";
         return ">100 mld.";
 }
 
@@ -809,7 +809,7 @@
         width: isMobile ? window.innerWidth * 0.9 : 800, // Adjust width dynamically
         height: isMobile ? 600 : 500, // **Reduce height for desktop**
         faceSize: isMobile ? 50 : 40, // **Smaller faces on desktop**
-        fontSize: isMobile ? "13px" : "14px" // Adjust axis text size
+        fontSize: isMobile ? "10px" : "11px" // Adjust axis text size
     };
 }
 
@@ -1004,15 +1004,15 @@ svg.append("g")
     // Wealth bucket filters
     
     setupFilterButton("filtruAvere0", "avere", "0");
-    setupFilterButton("filtruAvere1_10", "avere", "1-10 mil.");
-    setupFilterButton("filtruAvere10_50", "avere", "10-50 mil.");
-    setupFilterButton("filtruAvere50_100", "avere", "50-100 mil.");
-    setupFilterButton("filtruAvere100_500", "avere", "100-500 mil.");
-    setupFilterButton("filtruAvere500_1000", "avere", "0.5 - 1 mld.");
-    setupFilterButton("filtruAvere1000_10000", "avere", "1-10 mld.");
-    setupFilterButton("filtruAvere10000_50000", "avere", "10-50 mld.");
-    setupFilterButton("filtruAvere50000_100000", "avere", "50-100 mld.");
-    setupFilterButton("filtruAvereOver100000", "avere", ">100 mld.");
+    setupFilterButton("filtruAvere1_10", "avere", "1-10mil.");
+    setupFilterButton("filtruAvere10_50", "avere", "10-50mil.");
+    setupFilterButton("filtruAvere50_100", "avere", "50-100mil.");
+    setupFilterButton("filtruAvere100_500", "avere", "100-500mil.");
+    setupFilterButton("filtruAvere500_1000", "avere", "0.5-1mld.");
+    setupFilterButton("filtruAvere1000_10000", "avere", "1-10mld.");
+    setupFilterButton("filtruAvere10000_50000", "avere", "10-50mld.");
+    setupFilterButton("filtruAvere50000_100000", "avere", "50-100mld.");
+    setupFilterButton("filtruAvereOver100000", "avere", ">100mld.");
     setupFilterResetButton("filtruAvereReset", "avere");
 
     // -----------------------------------------
@@ -1026,13 +1026,13 @@ svg.append("g")
 
       svg.select(".x-axis")
         .selectAll("text")
-        .style("font-size", "13px")  // Adjust size
+        .style("font-size", "12px")  // Adjust size
         .style("fill", "#333")  // Adjust color if needed
         .style("font-family", "Roboto, sans-serif");
 
         svg.select(".y-axis")
         .selectAll("text")
-        .style("font-size", "13px")  // Adjust size
+        .style("font-size", "12px")  // Adjust size
         .style("fill", "#333")  
         .style("font-family", "Roboto, sans-serif");
 
@@ -1071,8 +1071,8 @@ svg.append("g")
           const bandTop = yScale(d.wealthBucket);
           return bandTop + yScale.bandwidth() / 2 - 25;
         })
-        .attr("width", 70)
-        .attr("height", 70);
+        .attr("width", 60)
+        .attr("height", 60);
 
       faces
         .on("mouseover", function(event, d) {
