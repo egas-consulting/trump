@@ -72,16 +72,38 @@
       color: #EFF1F3;
     }
 
-    #scatterPlot {
-      width: 100%;
-      height: auto;
-      display: block;
-      border: 1px solid #ccc; /* optional border */
+        @media (max-width: 768px) {
+    .filters button {
+        padding: 2px 5px;
+        font-size: 13px;
+    }
     }
 
-    .face {
-      cursor: pointer;
+    #scatterPlot {
+    width: 100vw; /* Full width */
+    max-width: 1000px; /* Limit on large screens */
+    height: auto;
+    display: block;
+    border: 1px solid #ccc; /* optional border */
     }
+
+    @media (max-width: 768px) {
+    #scatterPlot {
+        width: 95vw; /* Increase space for scatterplot on small screens */
+    }
+    }
+
+
+    .face {
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .face {
+    width: 60px !important;
+    height: 60px !important;
+  }
+}
 
     .tooltip {
     position: absolute;
@@ -165,11 +187,11 @@
         <button id="filtruAvere10_50">10-50 mil.</button>
         <button id="filtruAvere50_100">50-100 mil.</button>
         <button id="filtruAvere100_500">100-500 mil.</button>
-        <button id="filtruAvere500_1000">500 mil. - 1 mld.</button>
+        <button id="filtruAvere500_1000">0.5 - 1 mld.</button>
         <button id="filtruAvere1000_10000">1-10 mld.</button>
         <button id="filtruAvere10000_50000">10-50 mld.</button>
         <button id="filtruAvere50000_100000">50-100 mld.</button>
-        <button id="filtruAvereOver100000">peste 100 mld.</button>
+        <button id="filtruAvereOver100000">>100 mld.</button>
         <button id="filtruAvereReset">Toate</button>
       </div>
     </div>
@@ -750,11 +772,11 @@
     "10-50 mil.",
     "50-100 mil.",
     "100-500 mil.",
-    "500 mil. - 1 mld.",
+    "0.5 - 1 mld.",
     "1-10 mld.",
     "10-50 mld.",
     "50-100 mld.",
-    "peste 100 mld."
+    ">100 mld."
     ];
 
     function wealthToCategory(w) {
@@ -763,11 +785,11 @@
         if (w >= 10 && w < 50) return "10-50 mil.";
         if (w >= 50 && w < 100) return "50-100 mil.";
         if (w >= 100 && w < 500) return "100-500 mil.";
-        if (w >= 500 && w < 1000) return "500 mil. - 1 mld.";
+        if (w >= 500 && w < 1000) return "0.5 - 1 mld.";
         if (w >= 1000 && w < 10000) return "1-10 mld.";
         if (w >= 10000 && w < 50000) return "10-50 mld.";
         if (w >= 50000 && w < 100000) return "50-100 mld.";
-        return "peste 100 mld.";
+        return ">100 mld.";
 }
 
     // Convert wealth to numeric + bucket
@@ -780,30 +802,58 @@
     // 2) X scale (linear for age)
     const originalXDomain = d3.extent(data, d => d.age);
 
-    // Dimensions
-    const width = 800;
-    const height = 900;
-    const margin = { top: 20, right: 50, bottom: 55, left: 115 };
+    // Function to determine chart size dynamically
+    function getChartSize() {
+    const isMobile = window.innerWidth < 768;
+    return {
+        width: isMobile ? window.innerWidth * 0.9 : 800, // Adjust width dynamically
+        height: isMobile ? 600 : 900, // Adjust height dynamically
+        faceSize: isMobile ? 50 : 70, // Scale face images
+        fontSize: isMobile ? "13px" : "15px" // Adjust axis text size
+    };
+    }
+
+// Initialize dimensions
+let { width, height, faceSize, fontSize } = getChartSize();
+const margin = { top: 20, right: 50, bottom: 55, left: 115 };
 
     // Select our SVG + tooltip
-    const svg = d3.select("#scatterPlot");
+    const svg = d3.select("#scatterPlot")
+  .attr("width", width)
+  .attr("height", height)
+  .attr("viewBox", `0 0 ${width} ${height}`)
+  .attr("preserveAspectRatio", "xMidYMid meet");
     const tooltip = d3.select("#tooltip");
 
-    // X-scale
+    // Define scales dynamically
     const xScale = d3.scaleLinear()
-      .domain(originalXDomain)
-      .range([margin.left, width - margin.right]);
+    .domain(originalXDomain)
+    .range([margin.left, width - margin.right]);
 
-    // Y-scale (band for buckets)
     const yScale = d3.scaleBand()
-      .domain(wealthCategories)
-      .range([height - margin.bottom, margin.top])  // Keep normal values in place
-      .padding(0.1);
+    .domain(wealthCategories)
+    .range([height - margin.bottom, margin.top])
+    .padding(0.1);
 
-    // Axes
-    const xAxis = d3.axisBottom(xScale).ticks(10);
-    const yAxis = d3.axisLeft(yScale)
-  .tickFormat(d => d);
+
+    // Axes with dynamic font size
+const xAxis = d3.axisBottom(xScale).ticks(10);
+const yAxis = d3.axisLeft(yScale);
+
+// Append axis groups
+svg.append("g")
+  .attr("class", "x-axis")
+  .attr("transform", `translate(0,${height - margin.bottom})`)
+  .call(xAxis)
+  .selectAll("text")
+  .style("font-size", fontSize); // Apply dynamic font size
+
+svg.append("g")
+  .attr("class", "y-axis")
+  .attr("transform", `translate(${margin.left},0)`)
+  .call(yAxis)
+  .selectAll("text")
+  .style("font-size", fontSize);
 
     // Axis groups
     svg.append("g")
@@ -958,11 +1008,11 @@
     setupFilterButton("filtruAvere10_50", "avere", "10-50 mil.");
     setupFilterButton("filtruAvere50_100", "avere", "50-100 mil.");
     setupFilterButton("filtruAvere100_500", "avere", "100-500 mil.");
-    setupFilterButton("filtruAvere500_1000", "avere", "500 mil. - 1 mld.");
+    setupFilterButton("filtruAvere500_1000", "avere", "0.5 - 1 mld.");
     setupFilterButton("filtruAvere1000_10000", "avere", "1-10 mld.");
     setupFilterButton("filtruAvere10000_50000", "avere", "10-50 mld.");
     setupFilterButton("filtruAvere50000_100000", "avere", "50-100 mld.");
-    setupFilterButton("filtruAvereOver100000", "avere", "peste 100 mld.");
+    setupFilterButton("filtruAvereOver100000", "avere", ">100 mld.");
     setupFilterResetButton("filtruAvereReset", "avere");
 
     // -----------------------------------------
@@ -1021,8 +1071,8 @@
           const bandTop = yScale(d.wealthBucket);
           return bandTop + yScale.bandwidth() / 2 - 25;
         })
-        .attr("width", 60)
-        .attr("height", 60);
+        .attr("width", 70)
+        .attr("height", 70);
 
       faces
         .on("mouseover", function(event, d) {
@@ -1110,6 +1160,51 @@
     document.getElementById("filtruVarstaReset").classList.add("active");
     document.getElementById("filtruTipReset").classList.add("active");
     document.getElementById("filtruAvereReset").classList.add("active");
+
+// Function to update sizes dynamically on resize
+function updateSizes() {
+  let newSize = getChartSize();
+
+  // Update width, height, font size
+  svg.attr("width", newSize.width)
+     .attr("height", newSize.height)
+     .attr("viewBox", `0 0 ${newSize.width} ${newSize.height}`);
+
+  // Update scales
+  xScale.range([margin.left, newSize.width - margin.right]);
+  yScale.range([newSize.height - margin.bottom, margin.top]);
+
+  // Update axes
+  svg.select(".x-axis")
+    .attr("transform", `translate(0,${newSize.height - margin.bottom})`)
+    .call(xAxis)
+    .selectAll("text")
+    .style("font-size", newSize.fontSize);
+
+  svg.select(".y-axis")
+    .call(yAxis)
+    .selectAll("text")
+    .style("font-size", newSize.fontSize);
+
+  // Resize faces dynamically
+  svg.selectAll(".face")
+    .attr("width", newSize.faceSize)
+    .attr("height", newSize.faceSize)
+    .attr("x", d => xScale(d.age) - newSize.faceSize / 2)
+    .attr("y", d => {
+      const bandTop = yScale(d.wealthBucket);
+      return bandTop + yScale.bandwidth() / 2 - newSize.faceSize / 2;
+    });
+}
+
+// Resize event listener
+window.addEventListener("resize", updateSizes);
+
+// Call function initially
+updateSizes();
+
+
+
 
     // First render
     render(data);
