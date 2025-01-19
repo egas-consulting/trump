@@ -72,76 +72,101 @@
       color: #EFF1F3;
     }
 
-        @media (max-width: 768px) {
-    .filters button {
+    @media (max-width: 768px) {
+      .filters button {
         padding: 2px 5px;
         font-size: 13px;
-    }
+      }
     }
 
     #scatterPlot {
-    width: 100vw; /* Full width */
-    max-width: 1000px; /* Limit on large screens */
-    height: auto;
-    display: block;
-    border: 1px solid #ccc; /* optional border */
+      width: 100vw; /* Full width */
+      max-width: 1000px; /* Limit on large screens */
+      height: auto;
+      display: block;
+      border: 1px solid #ccc; /* optional border */
     }
 
     @media (max-width: 768px) {
-    #scatterPlot {
+      #scatterPlot {
         width: 95vw; /* Increase space for scatterplot on small screens */
+      }
     }
-    }
-
 
     .face {
-  cursor: pointer;
-}
+      cursor: pointer;
+    }
 
-@media (max-width: 768px) {
-  .face {
-    width: 50px !important;
-    height: 50px !important;
-  }
-}
+    @media (max-width: 768px) {
+      .face {
+        width: 50px !important;
+        height: 50px !important;
+      }
+    }
 
+    /* Tooltip styles with maximum width and text wrapping */
     .tooltip {
-    position: absolute;
-    background-color: rgba(255, 255, 255, 0.85); /* 👈 Slightly transparent */
-    border: 1px solid #999;
-    padding: 10px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-    z-index: 10;
-    
-    /* Customize Font */
-    font-size: 13px;
-    font-family: 'Roboto', sans-serif;
-    color: #2C2D41;
-    border-radius: 5px; /* Optional: rounded corners */
+      position: absolute;
+      background-color: rgba(255, 255, 255, 0.85);
+      border: 1px solid #999;
+      padding: 10px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 10;
+      font-size: 13px;
+      font-family: 'Roboto', sans-serif;
+      color: #2C2D41;
+      border-radius: 5px;
+      max-width: 200px; /* Prevent excessively wide tooltips */
+      word-wrap: break-word; /* Allow text to wrap */
+    }
+
+    /* Tooltip arrow styles */
+    .tooltip::after {
+      content: "";
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-style: solid;
+    }
+
+    /* Arrow pointing down (tooltip positioned above the cursor) */
+    .tooltip[data-position="bottom"]::after {
+      border-width: 5px 5px 0 5px;
+      border-color: #999 transparent transparent transparent;
+      top: 100%;
+      left: 10px; /* Adjust based on tooltip width */
+    }
+
+    /* Arrow pointing up (tooltip positioned below the cursor) */
+    .tooltip[data-position="top"]::after {
+      border-width: 0 5px 5px 5px;
+      border-color: transparent transparent #999 transparent;
+      bottom: 100%;
+      left: 10px; /* Adjust based on tooltip width */
     }
 
     .image-container {
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    text-align: center;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      text-align: center;
     }
 
     .wide-detail-image {
-    width: 100vw; /* Default for mobile */
-    height: auto;
-    display: block;
-    margin: 0 auto;
+      width: 100vw; /* Default for mobile */
+      height: auto;
+      display: block;
+      margin: 0 auto;
     }
 
     /* On larger screens, restrict width */
     @media (min-width: 900px) { /* Adjust breakpoint as needed */
-    .wide-detail-image {
+      .wide-detail-image {
         max-width: 900px; /* Matches scatter plot width */
         width: 100%;
-    }
+      }
     }
   </style>
 </head>
@@ -149,7 +174,7 @@
 
   <div class="chart-container">
 
-    <!-- Filter buttons (same as before) -->
+    <!-- Filter buttons -->
     <div class="filters">
       <!-- Filter by Gender -->
       <div class="filter-group">
@@ -181,7 +206,6 @@
       <!-- Filter by "Bucketed" Wealth -->
       <div class="filter-group">
         <span><strong>Filtrează după avere (interval):</strong></span>
-        
         <button id="filtruAvere0">0</button>
         <button id="filtruAvere1_10">1-10mil.</button>
         <button id="filtruAvere10_50">10-50mil.</button>
@@ -767,30 +791,30 @@
     // 1) Bucket definitions for wealth
     // -----------------------------------------
     const wealthCategories = [
-     "0",
-    "1-10mil.",
-    "10-50mil.",
-    "50-100mil.",
-    "100-500mil.",
-    "0.5-1mld.",
-    "1-10mld.",
-    "10-50mld.",
-    "50-100mld.",
-    ">100mld."
+      "0",
+      "1-10mil.",
+      "10-50mil.",
+      "50-100mil.",
+      "100-500mil.",
+      "0.5-1mld.",
+      "1-10mld.",
+      "10-50mld.",
+      "50-100mld.",
+      ">100mld."
     ];
 
     function wealthToCategory(w) {
-        if (w === 0) return "0";
-        if (w >= 1 && w < 10) return "1-10mil.";
-        if (w >= 10 && w < 50) return "10-50mil.";
-        if (w >= 50 && w < 100) return "50-100mil.";
-        if (w >= 100 && w < 500) return "100-500mil.";
-        if (w >= 500 && w < 1000) return "0.5-1mld.";
-        if (w >= 1000 && w < 10000) return "1-10mld.";
-        if (w >= 10000 && w < 50000) return "10-50mld.";
-        if (w >= 50000 && w < 100000) return "50-100mld.";
-        return ">100 mld.";
-}
+      if (w === 0) return "0";
+      if (w >= 1 && w < 10) return "1-10mil.";
+      if (w >= 10 && w < 50) return "10-50mil.";
+      if (w >= 50 && w < 100) return "50-100mil.";
+      if (w >= 100 && w < 500) return "100-500mil.";
+      if (w >= 500 && w < 1000) return "0.5-1mld.";
+      if (w >= 1000 && w < 10000) return "1-10mld.";
+      if (w >= 10000 && w < 50000) return "10-50mld.";
+      if (w >= 50000 && w < 100000) return "50-100mld.";
+      return ">100mld.";
+    }
 
     // Convert wealth to numeric + bucket
     data.forEach(d => {
@@ -804,87 +828,77 @@
 
     // Function to determine chart size dynamically
     function getChartSize() {
-    const isMobile = window.innerWidth < 768;
-    return {
-        width: isMobile ? window.innerWidth * 0.9 : 800, // Adjust width dynamically
-        height: isMobile ? 600 : 500, // **Reduce height for desktop**
-        faceSize: isMobile ? 50 : 40, // **Smaller faces on desktop**
-        fontSize: isMobile ? "10px" : "11px" // Adjust axis text size
-    };
-}
+      const isMobile = window.innerWidth < 768;
+      return {
+          width: isMobile ? window.innerWidth * 0.9 : 800, // Adjust width dynamically
+          height: isMobile ? 400 : 500, // **Reduced height for mobile**
+          faceSize: isMobile ? 50 : 40, // **Smaller faces on desktop**
+          fontSize: isMobile ? "10px" : "11px" // Adjust axis text size
+      };
+    }
 
-// Initialize dimensions
-let { width, height, faceSize, fontSize } = getChartSize();
-const margin = { top: 20, right: 50, bottom: 55, left: 115 };
+    // Initialize dimensions
+    let { width, height, faceSize, fontSize } = getChartSize();
+    const margin = { top: 20, right: 50, bottom: 40, left: 115 }; // Adjusted bottom margin
 
     // Select our SVG + tooltip
     const svg = d3.select("#scatterPlot")
-  .attr("width", width)
-  .attr("height", height)
-  .attr("viewBox", `0 0 ${width} ${height}`)
-  .attr("preserveAspectRatio", "xMidYMid meet");
+      .attr("width", width)
+      .attr("height", height)
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("preserveAspectRatio", "xMidYMid meet");
     const tooltip = d3.select("#tooltip");
 
     // Define scales dynamically
     const xScale = d3.scaleLinear()
-    .domain(originalXDomain)
-    .range([margin.left, width - margin.right]);
+      .domain(originalXDomain)
+      .range([margin.left, width - margin.right]);
 
     const yScale = d3.scaleBand()
-    .domain(wealthCategories)
-    .range([height - margin.bottom, margin.top])
-    .padding(0.1);
-
+      .domain(wealthCategories)
+      .range([height - margin.bottom, margin.top])
+      .padding(0.1);
 
     // Axes with dynamic font size
-const xAxis = d3.axisBottom(xScale).ticks(10);
-const yAxis = d3.axisLeft(yScale);
+    const xAxis = d3.axisBottom(xScale).ticks(10);
+    const yAxis = d3.axisLeft(yScale);
 
-// Append axis groups
-svg.append("g")
-  .attr("class", "x-axis")
-  .attr("transform", `translate(0,${height - margin.bottom})`)
-  .call(xAxis)
-  .selectAll("text")
-  .style("font-size", fontSize); // Apply dynamic font size
-
-svg.append("g")
-  .attr("class", "y-axis")
-  .attr("transform", `translate(${margin.left},0)`)
-  .call(yAxis)
-  .selectAll("text")
-  .style("font-size", fontSize);
-
-    // Axis groups
+    // Append axis groups
     svg.append("g")
       .attr("class", "x-axis")
-      .attr("transform", `translate(0,${height - margin.bottom})`);
+      .attr("transform", `translate(0,${height - margin.bottom})`)
+      .call(xAxis)
+      .selectAll("text")
+      .style("font-size", fontSize); // Apply dynamic font size
+
     svg.append("g")
       .attr("class", "y-axis")
-      .attr("transform", `translate(${margin.left},0)`);
+      .attr("transform", `translate(${margin.left},0)`)
+      .call(yAxis)
+      .selectAll("text")
+      .style("font-size", fontSize);
+
+    // Axis labels
+    svg.append("text")
+      .attr("class", "x-axis-label")
+      .attr("x", width / 2)
+      .attr("y", height - 10)
+      .attr("text-anchor", "middle")
+      .style("font-size", "16px")
+      .style("font-weight", "bold")
+      .style("fill", "#333")
+      .text("Vârstă");
 
     svg.append("text")
-    .attr("class", "x-axis-label")
-    .attr("x", width / 2)  // Center it horizontally
-    .attr("y", height - 10)  // Position it below the x-axis
-    .attr("text-anchor", "middle")
-    .style("font-size", "16px")
-    .style("font-weight", "bold")
-    .style("fill", "#333")
-    .text("Vârstă");
-
-    svg.append("text")
-    .attr("class", "y-axis-label")
-    .attr("x", -height / 2)  // Center vertically
-    .attr("y", 20)  // Move it left of the axis
-    .attr("transform", "rotate(-90)")  // Rotate to match y-axis direction
-    .attr("text-anchor", "middle")
-    .style("font-size", "16px")
-    .style("font-weight", "bold")
-    .style("fill", "#333")
-    .text("Avere (interval)");
-
-
+      .attr("class", "y-axis-label")
+      .attr("x", -height / 2)
+      .attr("y", 20)
+      .attr("transform", "rotate(-90)")
+      .attr("text-anchor", "middle")
+      .style("font-size", "16px")
+      .style("font-weight", "bold")
+      .style("fill", "#333")
+      .text("Avere (interval)");
 
     // -----------------------------------------
     // 3) D3 Zoom setup
@@ -920,10 +934,10 @@ svg.append("g")
 
       // Re-position the faces
       svg.selectAll(".face")
-        .attr("x", d => xScale(d.age) - 25)
+        .attr("x", d => xScale(d.age) - faceSize / 2)
         .attr("y", d => {
           const bandTop = yScale(d.wealthBucket);
-          return bandTop + yScale.bandwidth() / 2 - 25;
+          return bandTop + yScale.bandwidth() / 2 - faceSize / 2;
         });
     }
 
@@ -974,6 +988,7 @@ svg.append("g")
         render(filteredData());
       });
     }
+
     function setupFilterResetButton(buttonId, filterKey) {
       const button = document.getElementById(buttonId);
       button.addEventListener("click", () => {
@@ -1002,7 +1017,6 @@ svg.append("g")
     setupFilterResetButton("filtruTipReset", "tipPoz");
 
     // Wealth bucket filters
-    
     setupFilterButton("filtruAvere0", "avere", "0");
     setupFilterButton("filtruAvere1_10", "avere", "1-10mil.");
     setupFilterButton("filtruAvere10_50", "avere", "10-50mil.");
@@ -1019,8 +1033,7 @@ svg.append("g")
     // 5) Render function
     // -----------------------------------------
     function render(dataArray) {
-      // Update axes (to reflect if the user filtered to fewer data points, 
-      // although the domain remains the same unless you wanted dynamic domains).
+      // Update axes
       svg.select(".x-axis").call(xAxis);
       svg.select(".y-axis").call(yAxis);
 
@@ -1030,21 +1043,19 @@ svg.append("g")
         .style("fill", "#333")  // Adjust color if needed
         .style("font-family", "Roboto, sans-serif");
 
-        svg.select(".y-axis")
+      svg.select(".y-axis")
         .selectAll("text")
         .style("font-size", "12px")  // Adjust size
         .style("fill", "#333")  
         .style("font-family", "Roboto, sans-serif");
 
-        svg.select(".x-axis-label")  // Assuming you have a label class
+      svg.select(".x-axis-label")  // Assuming you have a label class
         .style("font-size", "16px")
         .style("font-weight", "bold");
 
-        svg.select(".y-axis-label")
+      svg.select(".y-axis-label")
         .style("font-size", "16px")
         .style("font-weight", "bold");
-
-      
 
       // Data join
       let faces = svg.selectAll(".face")
@@ -1062,17 +1073,13 @@ svg.append("g")
       faces
         .attr("xlink:href", d => (d.id === selectedId) ? d.faceHover : d.faceDefault)
         .transition()
-        .attr("x", d => xScale(d.age) - 25)
+        .attr("x", d => xScale(d.age) - faceSize / 2)
         .attr("y", d => {
-          if (d.wealthBucket === "N/A") {
-          return yScale("-1") + yScale.bandwidth() / 2 - 25;  // 👈 Move to -1
-        }
-
           const bandTop = yScale(d.wealthBucket);
-          return bandTop + yScale.bandwidth() / 2 - 25;
+          return bandTop + yScale.bandwidth() / 2 - faceSize / 2;
         })
-        .attr("width", 60)
-        .attr("height", 60);
+        .attr("width", faceSize)
+        .attr("height", faceSize);
 
       faces
         .on("mouseover", function(event, d) {
@@ -1083,37 +1090,74 @@ svg.append("g")
           updateHoverImage(d.id);
 
           const wealthText = d.wealthNumeric !== null 
-        ? (d.wealthNumeric < 1000 
-            ? `${d.wealthNumeric} mil.`  // If below 1000, keep in "mil."
-            : `${(d.wealthNumeric / 1000).toFixed(2)} mld.`)  // Convert to billions
-        : "N/A";
+            ? (d.wealthNumeric < 1000 
+                ? `${d.wealthNumeric} mil.`  // If below 1000, keep in "mil."
+                : `${(d.wealthNumeric / 1000).toFixed(2)} mld.`)  // Convert to billions
+            : "N/A";
           tooltip
-          .html(`
-            <strong>Nume:</strong> ${d.name}<br/>
-            <strong>Funcție:</strong> ${d.function}<br/>
-            <strong>Vârstă:</strong> ${d.age}<br/>
-            <strong>Avere:</strong> ${wealthText} <br/>
-            <strong>Nr. Washington Monuments:</strong> ${d.inaltime}<br/>
-            <strong>Distanță în bancnote:</strong> ${d.lungime} km <br/>
-            <strong>Adică circumferința Pământului de:</strong> ${d.ecuator} ori<br/>
-        `)
-        .style("background-color", "rgba(255, 255, 255, 0.85)")  // 👈 Slightly transparent
-        .style("border", "1px solid #999")
-        .style("padding", "10px")
-        .style("opacity", 1)  // Ensure tooltip appears on hover
-        .style("font-size", "13px")
-        .style("color", "#2C2D41")
-        .style("border-radius", "5px"); // Optional: rounded corners👈 Adjust text color if needed
-                })
+            .html(`
+              <strong>Nume:</strong> ${d.name}<br/>
+              <strong>Funcție:</strong> ${d.function}<br/>
+              <strong>Vârstă:</strong> ${d.age}<br/>
+              <strong>Avere:</strong> ${wealthText} <br/>
+              <strong>Nr. Washington Monuments:</strong> ${d.inaltime}<br/>
+              <strong>Distanță în bancnote:</strong> ${d.lungime} km <br/>
+              <strong>Adică circumferința Pământului de:</strong> ${d.ecuator} ori<br/>
+            `)
+            .style("background-color", "rgba(255, 255, 255, 0.85)")
+            .style("border", "1px solid #999")
+            .style("padding", "10px")
+            .style("opacity", 1)
+            .style("font-size", "13px")
+            .style("color", "#2C2D41")
+            .style("border-radius", "5px");
+        })
         .on("mousemove", function(event) {
-          const containerRect = document
-            .querySelector(".chart-container")
-            .getBoundingClientRect();
-          const tooltipX = event.clientX - containerRect.left + 10;
-          const tooltipY = event.clientY - containerRect.top + 10;
-          tooltip
-            .style("left", tooltipX + "px")
-            .style("top", tooltipY + "px");
+          const container = document.querySelector(".chart-container");
+          const containerRect = container.getBoundingClientRect();
+          const tooltipNode = tooltip.node();
+
+          // Initial position: 10px offset from the cursor
+          let tooltipX = event.clientX - containerRect.left + 10;
+          let tooltipY = event.clientY - containerRect.top + 10;
+          let position = "top"; // Default position
+
+          // Apply initial position to calculate tooltip size
+          tooltip.style("left", tooltipX + "px")
+                 .style("top", tooltipY + "px")
+                 .style("opacity", 1);
+
+          // Get the tooltip's dimensions
+          const tooltipRect = tooltipNode.getBoundingClientRect();
+
+          // Adjust horizontal position if overflowing to the right
+          if (tooltipX + tooltipRect.width > containerRect.width) {
+              tooltipX = event.clientX - containerRect.left - tooltipRect.width - 10;
+              // Note: Do not change 'position' here to avoid affecting vertical placement
+          }
+
+          // Adjust vertical position if overflowing to the bottom
+          if (tooltipY + tooltipRect.height > containerRect.height) {
+              tooltipY = event.clientY - containerRect.top - tooltipRect.height - 10;
+              position = "bottom"; // Tooltip is above the cursor
+          }
+
+          // Ensure the tooltip doesn't go beyond the left boundary
+          if (tooltipX < 0) {
+              tooltipX = 10; // 10px padding from the left
+          }
+
+          // Ensure the tooltip doesn't go beyond the top boundary
+          if (tooltipY < 0) {
+              tooltipY = 10; // 10px padding from the top
+          }
+
+          // Apply the adjusted positions
+          tooltip.style("left", tooltipX + "px")
+                 .style("top", tooltipY + "px");
+
+          // Set the position attribute for arrow direction
+          tooltip.attr("data-position", position);
         })
         .on("mouseout", function(event, d) {
           hoveredId = null;
@@ -1161,56 +1205,62 @@ svg.append("g")
     document.getElementById("filtruTipReset").classList.add("active");
     document.getElementById("filtruAvereReset").classList.add("active");
 
-// Function to update sizes dynamically on resize
-function updateSizes() {
-    let newSize = getChartSize();
+    // Function to update sizes dynamically on resize
+    function updateSizes() {
+      let newSize = getChartSize();
 
-    // Update width, height, font size
-    svg.attr("width", newSize.width)
-       .attr("height", newSize.height)
-       .attr("viewBox", `0 0 ${newSize.width} ${newSize.height}`);
+      // Update width, height, and viewBox
+      svg.attr("width", newSize.width)
+         .attr("height", newSize.height)
+         .attr("viewBox", `0 0 ${newSize.width} ${newSize.height}`);
 
-    // Update scales
-    xScale.range([margin.left, newSize.width - margin.right]);
-    yScale.range([newSize.height - margin.bottom, margin.top]);
+      // Update scales
+      xScale.range([margin.left, newSize.width - margin.right]);
+      yScale.range([newSize.height - margin.bottom, margin.top]);
 
-    // Update axes
-    svg.select(".x-axis")
-        .attr("transform", `translate(0,${newSize.height - margin.bottom})`)
-        .call(xAxis)
-        .selectAll("text")
-        .style("font-size", newSize.fontSize);
+      // Update axes
+      svg.select(".x-axis")
+          .attr("transform", `translate(0,${newSize.height - margin.bottom})`)
+          .call(xAxis)
+          .selectAll("text")
+          .style("font-size", newSize.fontSize);
 
-    svg.select(".y-axis")
-        .call(yAxis)
-        .selectAll("text")
-        .style("font-size", newSize.fontSize);
+      svg.select(".y-axis")
+          .call(yAxis)
+          .selectAll("text")
+          .style("font-size", newSize.fontSize);
 
-    // Resize faces dynamically
-    svg.selectAll(".face")
-        .attr("width", newSize.faceSize)
-        .attr("height", newSize.faceSize)
-        .attr("x", d => xScale(d.age) - newSize.faceSize / 2)
-        .attr("y", d => {
-            const bandTop = yScale(d.wealthBucket);
-            return bandTop + yScale.bandwidth() / 2 - newSize.faceSize / 2;
-        });
-}
+      // Update axis labels
+      svg.select(".x-axis-label")
+          .attr("x", newSize.width / 2)
+          .attr("y", newSize.height - 10);
 
-// Resize event listener
-window.addEventListener("resize", updateSizes);
+      svg.select(".y-axis-label")
+          .attr("x", -newSize.height / 2)
+          .attr("y", 20);
 
-// Call function initially
-updateSizes();
+      // Resize and reposition faces dynamically
+      svg.selectAll(".face")
+          .attr("width", newSize.faceSize)
+          .attr("height", newSize.faceSize)
+          .attr("x", d => xScale(d.age) - newSize.faceSize / 2)
+          .attr("y", d => {
+              const bandTop = yScale(d.wealthBucket);
+              return bandTop + yScale.bandwidth() / 2 - newSize.faceSize / 2;
+          });
+    }
 
+    // Resize event listener
+    window.addEventListener("resize", updateSizes);
 
-
+    // Call function initially
+    updateSizes();
 
     // First render
     render(data);
 
     function sendHeight() {
-        window.parent.postMessage(document.body.scrollHeight, "*");
+      window.parent.postMessage(document.body.scrollHeight, "*");
     }
     
     window.addEventListener("load", sendHeight);
